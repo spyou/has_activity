@@ -1,7 +1,7 @@
-#  
+#
 # => has_activity
 # => Cary Dunn <cary.dunn@gmail.com>
-#  
+#
 
 # HasActivity
 
@@ -13,39 +13,39 @@ module Elctech
       def self.included(base)
         base.extend(ClassMethods)
       end
-      
+
       module ClassMethods
-        
+
         def self.extended(base)
           base.class_inheritable_accessor :activity_options
         end
-        
+
         def has_activity(options={})
           options[:by] ||= "created_at"
           include Elctech::Has::Activity::InstanceMethods
           extend Elctech::Has::Activity::SingletonMethods
-          
+
           self.activity_options = options
         end
       end
-      
+
       module SingletonMethods
-        
+
         # Grabs a hash of the activity since <time ago> grouped by <hour/day/week>
-        # 
+        #
         #   * :conditions
         #       same as the standard Rails finder. Used to scope your activity to a particular user, etc.
         #   * :padding
         #       true/false
         #   * :group_by
         #       :hour, :day, :week
-        # 
+        #
         def activity_since(since=1.week.ago, options={})
           activity_scope = (options.has_key?(:conditions) ? sanitize_sql(options[:conditions]) : "1=1")
           options[:padding] ||= true
           options[:order] ||= :asc
           options[:group_by] ||= :day
-          
+
           case options[:group_by]
           when :hour
             sql_statement = sanitize_sql(
@@ -54,7 +54,7 @@ module Elctech
                   COUNT(*) AS activity_count,
                   ((((YEAR(now()) - YEAR(#{activity_options[:by]}))*365)+(DAYOFYEAR(now())-DAYOFYEAR(#{activity_options[:by]})))*24)+(HOUR(now())-HOUR(#{activity_options[:by]})) as hours_ago,
                   CONCAT(YEAR(#{activity_options[:by]}), CONCAT(DAYOFYEAR(#{activity_options[:by]}), HOUR(#{activity_options[:by]}))) AS unique_hour
-                FROM feeds
+                FROM #{self.table_name}
                 WHERE #{activity_scope} AND #{activity_options[:by]} > ?
                 GROUP BY unique_hour
                 ORDER BY #{activity_options[:by]} ASC",
@@ -95,11 +95,11 @@ module Elctech
             unit = "days_ago"
             oldest_possible_unit = (((Time.now-since)/60)/60)/24
           end
-          
+
           results = connection.select_all(sql_statement)
           (options[:padding] ? pad_activity_results(results, unit, oldest_possible_unit.round, options[:order]) : format_activity_results(results, unit, order))
         end
-      
+
       private
         def format_activity_results(results, unit, order)
           results.inject([]) do |rs,r|
@@ -111,13 +111,13 @@ module Elctech
             (order == :asc) ? rs.push(entry) : rs.unshift(entry)
           end
         end
-        
+
         def pad_activity_results(results, unit, oldest_possible_offset, order)
           padded_results = []
-          
+
           current_unit_offset = oldest_possible_offset
           current_result_index = 0
-          
+
           while current_unit_offset >= 0 do
             if current_result_index < results.size && results[current_result_index][unit].to_i == current_unit_offset
               entry = {
@@ -144,13 +144,14 @@ module Elctech
             current_unit_offset = current_unit_offset-1
             (order == :asc) ? padded_results.push(entry) : padded_results.unshift(entry)
           end
-          
+
           padded_results
         end
       end
-      
+
       module InstanceMethods;end
-      
+
     end
   end
 end
+
