@@ -22,7 +22,7 @@ h2. USAGE / INSTALLATION
   class Feed < ActiveRecord::Base
     # Defaults to created_at
     has_activity
-    
+
     ...
   end
 </code></pre>
@@ -31,13 +31,13 @@ h2. USAGE / INSTALLATION
   class Feed < ActiveRecord::Base
     # Change the timestamp DB field to something custom
     has_activity :by => "published_at"
-    
+
     ...
   end
 </code></pre>
-  
+
 <pre><code>
-  # Get all activity since 1 week ago grouped by day (default) 
+  # Get all activity since 1 week ago grouped by day (default)
   Feed.activity_since(1.week.ago)
   => [{:activity=>0, :offset=>7, :created_at=>Mon Mar 09 10:27:34 -0700 2009}, {:activity=>0, :offset=>6, :created_at=>Tue Mar 10 10:27:34 -0700 2009}, {:activity=>8, :offset=>5, :created_at=>Wed Mar 11 01:19:09 -0700 2009}, {:activity=>2, :offset=>4, :created_at=>Thu Mar 12 04:26:09 -0700 2009}, {:activity=>0, :offset=>3, :created_at=>Fri Mar 13 10:27:34 -0700 2009}, {:activity=>0, :offset=>2, :created_at=>Sat Mar 14 10:27:34 -0700 2009}, {:activity=>0, :offset=>1, :created_at=>Sun Mar 15 10:27:34 -0700 2009}, {:activity=>0, :offset=>0, :created_at=>Mon Mar 16 10:27:34 -0700 2009}]
 </code></pre>
@@ -99,24 +99,31 @@ Feed.activity_since(6.months.ago, :group_by => :week, :order => :desc).to_activi
 => "http://chart.apis.google.com/chart?cht=bvs&chs=200x50&chd=t:0,10,15,3,8,4,0,3,2,3,0,11,4,23,14,0,0,0,13,0,4,8,19,10,12,21,1&chco=336699&chbh=a,2&chds=0,23&chf=bg,s,EFEFEF&"
 </code></pre>
 
+h2. DISPLAY THE GOOGLE CHART IN YOUR VIEW
+
+<pre><code>
+image_tag Feed.activity_since(6.months.ago, :group_by => :week, :order => :desc).to_activity_gchart
+=> "http://chart.apis.google.com/chart?cht=bvs&chs=200x50&chd=t:0,10,15,3,8,4,0,3,2,3,0,11,4,23,14,0,0,0,13,0,4,8,19,10,12,21,1&chco=336699&chbh=a,2&chds=0,23&chf=bg,s,EFEFEF&"
+</code></pre>
+
 h2. OTHER OPTIONS
 
 <pre><code>
   # Grabs a hash of the activity since <time ago> grouped by <hour/day/week>
-  # 
+  #
   #   * :conditions
   #       same as the standard Rails finder. Used to scope your activity to a particular user, etc.
   #   * :padding
   #       true/false
   #   * :group_by
   #       :hour, :day, :week
-  # 
+  #
   def activity_since(since=1.week.ago, options={})
 </code></pre>
 
 <pre><code>
   # Returns a URL to a simple google chart the represents the activity returned by the plugin
-  # 
+  #
   #   * :type => :bar/:line
   #   * :size => "200x50"
   #   * :bgcolor => "EFEFEF"
@@ -124,7 +131,7 @@ h2. OTHER OPTIONS
   #   * :area_color => "DFEBFF" (only for :line)
   #   * :line_color => "0077CC" (only for :line)
   #   * :line_width => "2" (only for :line)
-  # 
+  #
   def to_activity_gchart(options={})
 </code></pre>
 
@@ -137,3 +144,4 @@ add_index :model, [:created_at]
 </code></pre>
 
 Copyright (c) 2009 Cary Dunn <cary.dunn@gmail.com> "http://elctech.com":http://elctech.com, released under the MIT license
+
